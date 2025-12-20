@@ -6,10 +6,15 @@ import '../../data/models/mood.dart';
 import '../../data/services/local_db_service.dart';
 import '../widgets/mood_selector.dart';
 
+import '../../data/services/quote_service.dart';
+
 import 'dart:io'; // 處理檔案
 import 'package:image_picker/image_picker.dart'; // 選圖
 import 'package:path_provider/path_provider.dart'; // 找路徑
 import 'package:path/path.dart' as p; // 處理路徑字串
+
+import '../../providers/settings_provider.dart'; // 設定
+import '../../data/services/remote_ai_service.dart'; // 遠端服務
 
 class EditorScreen extends ConsumerStatefulWidget {
   final DateTime date; // 從首頁傳入的日期
@@ -89,53 +94,99 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
     setState(() => _isSaving = true);
 
-    // 1. 建立資料物件
-    // 在 _saveDiary 方法內
-    final entry = DiaryEntry()
-      ..id =
-          widget.existingEntry?.id ??
-          0 // 核心：如果有舊 ID 就沿用，沒有就用 0
-      ..date = widget.date
-      ..createdAt = widget.existingEntry?.createdAt ?? DateTime.now()
-      ..updatedAt = DateTime.now()
-      ..mood = _mood!
-      ..specificEmoji = _emoji!
-      ..content = _contentController.text;
+    try {
+      // 1. 獲取雞湯 (如果是修改舊日記且已經有雞湯，就不重新抓，保留當時的回憶)
+      String quoteContent;
+      if (widget.existingEntry?.cachedQuoteContent != null) {
+        quoteContent = widget.existingEntry!.cachedQuoteContent!;
+      } else {
+        // 如果是新日記，或者舊日記沒有雞湯，就抓一個新的
+        // B. 產生新雞湯：判斷是用 AI 還是本地
+        final settings = ref.read(settingsProvider);
+        String? aiQuote;
 
-    // 2. 寫入資料庫 (透過 Provider 取得 Service)
-    await ref.read(localDbServiceProvider).saveEntry(entry);
+        if (settings.isRemoteMode) {
+          // 嘗試呼叫遠端 AI
+          aiQuote = await RemoteAiService.getAiQuote(
+            settings.serverUrl,
+            _contentController.text,
+            _mood!,
+          );
+        }
 
-    // 3. (模擬) 雞湯回饋展示
-    // 之後這裡會改成讀取 JSON，現在先用簡單的 Switch 展示效果
-    if (mounted) {
-      await _showChickenSoupDialog(_mood!);
-      if (mounted) Navigator.pop(context); // 關閉頁面回首頁
+        if (aiQuote != null) {
+          // 遠端成功
+          quoteContent = aiQuote;
+        } else {
+          // 遠端失敗 (或沒開) -> Fallback 到本地 JSON
+          if (settings.isRemoteMode) {
+            // 如果開了遠端卻失敗，可以 Show 個 SnackBar 提示使用者 (可選)
+            if (mounted)
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("連線失敗，已切換回本地模式")));
+          }
+          quoteContent = await QuoteService.getQuoteForMood(_mood!);
+        }
+      }
+
+      // 2. 建立/更新資料物件
+      final entry = DiaryEntry()
+        ..id = widget.existingEntry?.id ?? 0
+        ..date = widget.date
+        ..createdAt = widget.existingEntry?.createdAt ?? DateTime.now()
+        ..updatedAt = DateTime.now()
+        ..mood = _mood!
+        ..specificEmoji = _emoji!
+        ..content = _contentController.text
+        ..cachedQuoteContent = quoteContent; // 存入雞湯
+
+      // 3. 寫入資料庫
+      await ref.read(localDbServiceProvider).saveEntry(entry);
+
+      // 4. 顯示雞湯彈窗回饋 (這一步很重要，給使用者的驚喜)
+      if (mounted) {
+        await _showChickenSoupDialog(_mood!, quoteContent);
+        if (mounted) Navigator.pop(context); // 關閉頁面回首頁
+      }
+    } catch (e) {
+      // 錯誤處理
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("儲存失敗: $e")));
+        setState(() => _isSaving = false);
+      }
     }
-  } //future _saveDiary
+  }
 
-  // 顯示雞湯彈窗
-  Future<void> _showChickenSoupDialog(Mood mood) async {
-    String quote = "今天也要加油！";
-    // 簡單的模擬資料
-    if (mood == Mood.sad) quote = "逃避雖可恥但有用，先睡一覺吧。";
-    if (mood == Mood.happy) quote = "保持這份快樂，你是最棒的！";
-    if (mood == Mood.angry) quote = "別用別人的錯誤來懲罰自己。";
-    if (mood == Mood.love) quote = "愛是生活最好的解藥。";
-
+  // 顯示雞湯彈窗 (接收 quote 參數)
+  Future<void> _showChickenSoupDialog(Mood mood, String quote) async {
     return showDialog(
       context: context,
+      barrierDismissible: false, // 強制使用者點按鈕才能關閉，確保看到雞湯
       builder: (context) => AlertDialog(
-        title: Text('${mood.representativeEmoji} 心靈小語'),
-        content: Text(quote, style: const TextStyle(fontSize: 18)),
+        title: Row(
+          children: [
+            Text(
+              mood.representativeEmoji,
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(width: 8),
+            const Text('給此刻的你'),
+          ],
+        ),
+        // 這裡顯示剛剛抓到的真實雞湯
+        content: Text(quote, style: const TextStyle(fontSize: 18, height: 1.5)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('收下'),
+            child: const Text('收下這份力量'),
           ),
         ],
       ),
     );
-  } //_showChickenSoupDialog
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();

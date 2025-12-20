@@ -8,7 +8,8 @@ environment:
 
 flutter:
   uses-material-design: true
-
+  assets:
+    - assets/data/quotes.json
 dependencies:
   flutter:
     sdk: flutter
@@ -34,6 +35,10 @@ dependencies:
   # share 功能
   screenshot: ^3.0.0   # 用來截圖
   share_plus: ^10.1.2  # 用來呼叫系統分享
+
+  # 遠端雞湯
+  http: ^1.2.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:

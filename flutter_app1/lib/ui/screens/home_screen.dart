@@ -6,6 +6,7 @@ import '../../providers/diary_provider.dart';
 import './editor_screen.dart';
 import 'detail_screen.dart';
 import 'stats_screen.dart';
+import 'settings_screen.dart';
 // import 'editor_screen.dart'; // 下一步才會建，先註解掉
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -38,6 +39,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const StatsScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
             },
           ),

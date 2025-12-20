@@ -1,0 +1,38 @@
+[
+  {
+    "content": "生活不一定每天都很好，但每天都有小美好等著你。",
+    "category": "happy"
+  },
+  {
+    "content": "快樂的秘訣不是擁有的多，而是計較的少。",
+    "category": "happy"
+  },
+  {
+    "content": "逃避雖可恥但有用，去睡覺吧，夢裡什麼都有。",
+    "category": "sad"
+  },
+  {
+    "content": "允許自己偶爾脆弱，這也是一種勇敢。",
+    "category": "sad"
+  },
+  {
+    "content": "別用別人的錯誤來懲罰自己，深呼吸。",
+    "category": "angry"
+  },
+  {
+    "content": "憤怒是短暫的瘋狂，別讓它毀了美好的一天。",
+    "category": "angry"
+  },
+  {
+    "content": "愛是生活最好的解藥。",
+    "category": "love"
+  },
+  {
+    "content": "平凡的日子裡，也有值得被記錄的溫柔。",
+    "category": "neutral"
+  },
+  {
+    "content": "今天也是普通但還不錯的一天。",
+    "category": "neutral"
+  }
+]
