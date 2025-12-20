@@ -97,7 +97,7 @@ class EmojiBody extends BodyComponent {
 
     final fixtureDef = FixtureDef(
       shape,
-      restitution: 0.2, // 彈性
+      restitution: 0.5, // 彈性
       density: 1.0, // 密度
       friction: 0.4, // 摩擦力
     );
