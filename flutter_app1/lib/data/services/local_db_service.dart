@@ -45,6 +45,23 @@ class LocalDbService {
     return result;
   }
 
+  // 取得特定時間範圍內的日記
+  List<DiaryEntry> getEntriesInRange(DateTime start, DateTime end) {
+    // ObjectBox 查詢
+    final query = box
+        .query(
+          DiaryEntry_.date.between(
+            start.millisecondsSinceEpoch,
+            end.millisecondsSinceEpoch,
+          ),
+        )
+        .build();
+
+    final results = query.find();
+    query.close();
+    return results;
+  }
+
   List<DiaryEntry> getEntriesForMonth(DateTime month) {
     final start = DateTime(month.year, month.month, 1);
     final end = DateTime(month.year, month.month + 1, 0);

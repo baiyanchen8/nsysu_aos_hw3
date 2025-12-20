@@ -19,7 +19,7 @@ class DetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(dateStr),
-        backgroundColor: moodColor.withOpacity(0.2), // 標題欄淡淡的心情色
+        backgroundColor: moodColor.withValues(alpha: 0.2), // 標題欄淡淡的心情色
         actions: [
           // 編輯按鈕
           IconButton(
@@ -48,7 +48,7 @@ class DetailScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
             width: double.infinity,
-            color: moodColor.withOpacity(0.1),
+            color: moodColor.withValues(alpha: .1),
             child: Row(
               children: [
                 Text(entry.specificEmoji, style: const TextStyle(fontSize: 48)),

@@ -36,7 +36,7 @@ class _MoodSelectorState extends State<MoodSelector> {
                 child: ChoiceChip(
                   label: Text(mood.label),
                   selected: isSelected,
-                  selectedColor: mood.color.withOpacity(0.3),
+                  selectedColor: mood.color.withValues(alpha: 0.3),
                   avatar: Text(mood.representativeEmoji), // 顯示代表性 Emoji
                   onSelected: (selected) {
                     setState(() {
@@ -77,7 +77,7 @@ class _MoodSelectorState extends State<MoodSelector> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isEmojiSelected
-                        ? _selectedMood!.color.withOpacity(0.2)
+                        ? _selectedMood!.color.withValues(alpha: 0.2)
                         : Colors.transparent,
                     shape: BoxShape.circle,
                     border: isEmojiSelected

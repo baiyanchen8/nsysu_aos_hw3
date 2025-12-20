@@ -5,6 +5,7 @@ import '../../data/models/diary_entry.dart';
 import '../../providers/diary_provider.dart';
 import './editor_screen.dart';
 import 'detail_screen.dart';
+import 'stats_screen.dart';
 // import 'editor_screen.dart'; // 下一步才會建，先註解掉
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -27,7 +28,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final selectedDay = ref.watch(selectedDateProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('心情日記'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('心情日記'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StatsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+
       // 3. 處理非同步資料 (Loading / Error / Data)
       body: diaryListAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
