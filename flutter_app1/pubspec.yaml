@@ -47,3 +47,11 @@ dev_dependencies:
   
   # === 改用 ObjectBox Generator ===
   objectbox_generator: ^2.4.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "ic_launcher" # Android 的 icon 檔案名稱
+  ios: true              # 自動產生 iOS icon
+  image_path: "assets/icon.png" # 你的圖片路徑 (要跟步驟一的路徑一樣)
+  min_sdk_android: 21    # 建議加上
+  remove_alpha_ios: true # iOS icon 不支援透明背景，這會自動幫你填滿背景色 (通常是黑色或白色，若有透明背景建議自己先處理好)
