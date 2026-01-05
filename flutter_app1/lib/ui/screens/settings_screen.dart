@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p; // 用於取得檔名
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/settings_provider.dart';
@@ -8,18 +9,37 @@ import '../../providers/theme_provider.dart';
 import '../../data/services/local_db_service.dart';
 import '../../data/services/backup_service.dart';
 import '../../data/models/quote.dart';
+import 'quote_management_screen.dart'; // 引入新頁面
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late TextEditingController _urlController;
+
+  @override
+  void initState() {
+    super.initState();
+    // 初始化控制器，只在頁面建立時讀取一次 Provider 的值
+    final settings = ref.read(settingsProvider);
+    _urlController = TextEditingController(text: settings.serverUrl);
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final themeMode = ref.watch(themeModeProvider);
-
-    // 使用 TextEditingController 來管理輸入框
-    final urlController = TextEditingController(text: settings.serverUrl);
 
     return Scaffold(
       appBar: AppBar(title: const Text("設定")),
@@ -63,40 +83,51 @@ class SettingsScreen extends ConsumerWidget {
               notifier.setRemoteMode(value);
             },
             secondary: Icon(
-              settings.isRemoteMode ? Icons.cloud_done : Icons.cloud_off,
-              color: settings.isRemoteMode ? Colors.blue : Colors.grey,
+              settings.isRemoteMode ? Icons.auto_awesome : Icons.cloud_off,
+              color: settings.isRemoteMode ? Colors.purple : Colors.grey,
             ),
           ),
 
-          if (settings.isRemoteMode) ...[
-            const Divider(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: urlController,
-                decoration: const InputDecoration(
-                  labelText: "伺服器位址 (Server IP)",
-                  hintText: "http://192.168.1.100:8000",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.link),
+          if (settings.isRemoteMode)
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 0,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("伺服器連線設定", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _urlController,
+                      decoration: const InputDecoration(
+                        labelText: "伺服器位址 (Server URL)",
+                        hintText: "http://192.168.1.100:8000",
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.link),
+                        isDense: true,
+                      ),
+                      keyboardType: TextInputType.url,
+                      onSubmitted: (value) {
+                        notifier.setServerUrl(value); // 按 Enter 儲存
+                      },
+                      onEditingComplete: () {
+                        notifier.setServerUrl(_urlController.text); // 離開焦點儲存
+                        FocusScope.of(context).unfocus();
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "請輸入完整網址，包含 http:// 與埠號。\n例如: http://10.0.2.2:1234 (模擬器用)",
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
                 ),
-                onSubmitted: (value) {
-                  notifier.setServerUrl(value); // 按 Enter 儲存
-                },
-                onEditingComplete: () {
-                  notifier.setServerUrl(urlController.text); // 離開焦點儲存
-                  FocusScope.of(context).unfocus();
-                },
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                "請輸入完整網址，包含 http:// 與埠號。",
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-            ),
-          ],
           const Divider(),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -162,6 +193,15 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: const Text('管理已匯入的雞湯集'),
+            subtitle: const Text('啟用/停用、合併、匯出與刪除'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const QuoteManagementScreen()));
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.library_add),
             title: const Text('匯入自定義雞湯 (JSON)'),
             subtitle: const Text('格式: [{"content": "...", "category": "happy"}]'),
@@ -175,6 +215,7 @@ class SettingsScreen extends ConsumerWidget {
                 if (result != null && result.files.single.path != null) {
                   final file = File(result.files.single.path!);
                   final jsonString = await file.readAsString();
+                  final fileName = p.basenameWithoutExtension(file.path); // 取得檔名作為預設名稱
                   final List<dynamic> jsonList = jsonDecode(jsonString);
 
                   final quotes = jsonList.map((q) => Quote(
@@ -183,7 +224,8 @@ class SettingsScreen extends ConsumerWidget {
                     author: q['author'],
                   )).toList();
 
-                  ref.read(localDbServiceProvider).addQuotes(quotes);
+                  // 改用 importQuotes
+                  ref.read(localDbServiceProvider).importQuotes(fileName, quotes);
 
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

@@ -14,10 +14,12 @@ class LocalDbService {
   late final Store store;
   late final Box<DiaryEntry> box;
   late final Box<Quote> quoteBox;
+  late final Box<QuoteSource> quoteSourceBox;
 
   LocalDbService._create(this.store) {
     box = store.box<DiaryEntry>();
     quoteBox = store.box<Quote>();
+    quoteSourceBox = store.box<QuoteSource>();
   }
 
   static Future<LocalDbService> init() async {
@@ -118,7 +120,66 @@ class LocalDbService {
   }
 
   // --- Quotes ---
-  void addQuotes(List<Quote> quotes) {
-    quoteBox.putMany(quotes);
+  // 匯入雞湯集
+  void importQuotes(String sourceName, List<Quote> quotes) {
+    final source = QuoteSource(
+      name: sourceName,
+      importedAt: DateTime.now(),
+      isEnabled: true,
+    );
+    // 將雞湯關聯到這個來源
+    source.quotes.addAll(quotes);
+    quoteSourceBox.put(source);
+  }
+
+  List<QuoteSource> getAllQuoteSources() {
+    return quoteSourceBox.getAll();
+  }
+
+  // 切換啟用狀態
+  void toggleQuoteSource(int id, bool isEnabled) {
+    final source = quoteSourceBox.get(id);
+    if (source != null) {
+      source.isEnabled = isEnabled;
+      quoteSourceBox.put(source);
+    }
+  }
+
+  // 刪除雞湯集 (連同裡面的雞湯一起刪除)
+  void deleteQuoteSource(int id) {
+    final source = quoteSourceBox.get(id);
+    if (source != null) {
+      // 先刪除關聯的雞湯
+      // 注意：ObjectBox 預設不會 Cascade Delete，需手動處理
+      final quoteIds = source.quotes.map((q) => q.id).toList();
+      quoteBox.removeMany(quoteIds);
+      // 再刪除來源
+      quoteSourceBox.remove(id);
+    }
+  }
+
+  // 合併雞湯集
+  void mergeQuoteSources(List<int> sourceIds, String newName) {
+    final sources = quoteSourceBox.getMany(sourceIds).whereType<QuoteSource>().toList();
+    if (sources.isEmpty) return;
+
+    final newSource = QuoteSource(
+      name: newName,
+      importedAt: DateTime.now(),
+      isEnabled: true,
+    );
+
+    // 收集所有舊來源的雞湯
+    final allQuotes = <Quote>[];
+    for (final s in sources) {
+      allQuotes.addAll(s.quotes);
+    }
+
+    // 將雞湯移動到新來源 (ObjectBox 會自動更新關聯)
+    newSource.quotes.addAll(allQuotes);
+    quoteSourceBox.put(newSource);
+
+    // 刪除舊來源 (雞湯已經移走了，所以這裡只刪除 Source 本體)
+    quoteSourceBox.removeMany(sourceIds);
   }
 }

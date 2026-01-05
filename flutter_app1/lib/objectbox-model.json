@@ -66,7 +66,7 @@
     },
     {
       "id": "2:1067589770953631987",
-      "lastPropertyId": "4:7568174623838166178",
+      "lastPropertyId": "5:8505436670919648811",
       "name": "Quote",
       "properties": [
         {
@@ -91,13 +91,50 @@
           "id": "4:7568174623838166178",
           "name": "author",
           "type": 9
+        },
+        {
+          "id": "5:8505436670919648811",
+          "name": "sourceId",
+          "type": 11,
+          "flags": 520,
+          "indexId": "3:2248850157426865772",
+          "relationTarget": "QuoteSource"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:6019832415675060129",
+      "lastPropertyId": "4:3968443603496709949",
+      "name": "QuoteSource",
+      "properties": [
+        {
+          "id": "1:7319657625252599134",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7950215950425717328",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:8499796918892357650",
+          "name": "isEnabled",
+          "type": 1
+        },
+        {
+          "id": "4:3968443603496709949",
+          "name": "importedAt",
+          "type": 10
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "2:1067589770953631987",
-  "lastIndexId": "2:6774069392427766861",
+  "lastEntityId": "3:6019832415675060129",
+  "lastIndexId": "3:2248850157426865772",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

@@ -84,7 +84,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(2, 1067589770953631987),
       name: 'Quote',
-      lastPropertyId: const obx_int.IdUid(4, 7568174623838166178),
+      lastPropertyId: const obx_int.IdUid(5, 8505436670919648811),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -107,10 +107,49 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(4, 7568174623838166178),
             name: 'author',
             type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 8505436670919648811),
+            name: 'sourceId',
+            type: 11,
+            flags: 520,
+            indexId: const obx_int.IdUid(3, 2248850157426865772),
+            relationTarget: 'QuoteSource')
+      ],
+      relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(3, 6019832415675060129),
+      name: 'QuoteSource',
+      lastPropertyId: const obx_int.IdUid(4, 3968443603496709949),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 7319657625252599134),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 7950215950425717328),
+            name: 'name',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 8499796918892357650),
+            name: 'isEnabled',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 3968443603496709949),
+            name: 'importedAt',
+            type: 10,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
-      backlinks: <obx_int.ModelBacklink>[])
+      backlinks: <obx_int.ModelBacklink>[
+        obx_int.ModelBacklink(
+            name: 'quotes', srcEntity: 'Quote', srcField: 'source')
+      ])
 ];
 
 /// Shortcut for [Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -148,8 +187,8 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(2, 1067589770953631987),
-      lastIndexId: const obx_int.IdUid(2, 6774069392427766861),
+      lastEntityId: const obx_int.IdUid(3, 6019832415675060129),
+      lastIndexId: const obx_int.IdUid(3, 2248850157426865772),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [],
@@ -228,7 +267,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         }),
     Quote: obx_int.EntityDefinition<Quote>(
         model: _entities[1],
-        toOneRelations: (Quote object) => [],
+        toOneRelations: (Quote object) => [object.source],
         toManyRelations: (Quote object) => {},
         getId: (Quote object) => object.id,
         setId: (Quote object, int id) {
@@ -239,11 +278,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final contentOffset = fbb.writeString(object.content);
           final authorOffset =
               object.author == null ? null : fbb.writeString(object.author!);
-          fbb.startTable(5);
+          fbb.startTable(6);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, categoryOffset);
           fbb.addOffset(2, contentOffset);
           fbb.addOffset(3, authorOffset);
+          fbb.addInt64(4, object.source.targetId);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -261,7 +301,52 @@ obx_int.ModelDefinition getObjectBoxModel() {
               category: categoryParam,
               author: authorParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-
+          object.source.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0);
+          object.source.attach(store);
+          return object;
+        }),
+    QuoteSource: obx_int.EntityDefinition<QuoteSource>(
+        model: _entities[2],
+        toOneRelations: (QuoteSource object) => [],
+        toManyRelations: (QuoteSource object) => {
+              obx_int.RelInfo<Quote>.toOneBacklink(
+                      5, object.id, (Quote srcObject) => srcObject.source):
+                  object.quotes
+            },
+        getId: (QuoteSource object) => object.id,
+        setId: (QuoteSource object, int id) {
+          object.id = id;
+        },
+        objectToFB: (QuoteSource object, fb.Builder fbb) {
+          final nameOffset = fbb.writeString(object.name);
+          fbb.startTable(5);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, nameOffset);
+          fbb.addBool(2, object.isEnabled);
+          fbb.addInt64(3, object.importedAt.millisecondsSinceEpoch);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final nameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 6, '');
+          final isEnabledParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false);
+          final importedAtParam = DateTime.fromMillisecondsSinceEpoch(
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0));
+          final object = QuoteSource(
+              name: nameParam,
+              isEnabled: isEnabledParam,
+              importedAt: importedAtParam)
+            ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          obx_int.InternalToManyAccess.setRelInfo<QuoteSource>(
+              object.quotes,
+              store,
+              obx_int.RelInfo<Quote>.toOneBacklink(
+                  5, object.id, (Quote srcObject) => srcObject.source));
           return object;
         })
   };
@@ -328,4 +413,31 @@ class Quote_ {
   /// see [Quote.author]
   static final author =
       obx.QueryStringProperty<Quote>(_entities[1].properties[3]);
+
+  /// see [Quote.source]
+  static final source =
+      obx.QueryRelationToOne<Quote, QuoteSource>(_entities[1].properties[4]);
+}
+
+/// [QuoteSource] entity fields to define ObjectBox queries.
+class QuoteSource_ {
+  /// see [QuoteSource.id]
+  static final id =
+      obx.QueryIntegerProperty<QuoteSource>(_entities[2].properties[0]);
+
+  /// see [QuoteSource.name]
+  static final name =
+      obx.QueryStringProperty<QuoteSource>(_entities[2].properties[1]);
+
+  /// see [QuoteSource.isEnabled]
+  static final isEnabled =
+      obx.QueryBooleanProperty<QuoteSource>(_entities[2].properties[2]);
+
+  /// see [QuoteSource.importedAt]
+  static final importedAt =
+      obx.QueryDateProperty<QuoteSource>(_entities[2].properties[3]);
+
+  /// see [QuoteSource.quotes]
+  static final quotes =
+      obx.QueryBacklinkToMany<Quote, QuoteSource>(Quote_.source);
 }
