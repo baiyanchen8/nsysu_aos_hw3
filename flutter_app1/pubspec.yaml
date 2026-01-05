@@ -39,6 +39,8 @@ dependencies:
   # 遠端雞湯
   http: ^1.2.0
   shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.0.0
+  google_generative_ai: ^0.4.0
 
   # 壓縮與解壓縮 + 檔案選取 +備份還原
   archive: ^3.6.1

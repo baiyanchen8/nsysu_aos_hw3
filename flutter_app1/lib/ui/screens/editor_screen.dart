@@ -14,7 +14,7 @@ import 'package:path_provider/path_provider.dart'; // 找路徑
 import 'package:path/path.dart' as p; // 處理路徑字串
 
 import '../../providers/settings_provider.dart'; // 設定
-import '../../data/services/remote_ai_service.dart'; // 遠端服務
+import '../../providers/ai_provider.dart'; // 引入 AI Provider
 
 class EditorScreen extends ConsumerStatefulWidget {
   final DateTime date; // 從首頁傳入的日期
@@ -107,11 +107,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
         if (settings.isRemoteMode) {
           // 嘗試呼叫遠端 AI
-          aiQuote = await RemoteAiService.getAiQuote(
-            settings.serverUrl,
-            _contentController.text,
-            _mood!,
-          );
+          // 使用 aiServiceProvider 自動根據設定取得對應的 Service (Local/OpenAI/Gemini)
+          aiQuote = await ref.read(aiServiceProvider).getQuote(_contentController.text, _mood!);
         }
 
         if (aiQuote != null) {

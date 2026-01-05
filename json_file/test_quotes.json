@@ -1,0 +1,34 @@
+[
+  {
+    "content": "快樂不是因為擁有的多，而是計較的少。",
+    "category": "happy"
+  },
+  {
+    "content": "微笑是世界上最美麗的語言。",
+    "category": "happy"
+  },
+  {
+    "content": "眼淚流乾了，剩下的就是堅強。",
+    "category": "sad"
+  },
+  {
+    "content": "黑夜無論怎樣悠長，白晝總會到來。",
+    "category": "sad"
+  },
+  {
+    "content": "生氣是用別人的錯誤懲罰自己。",
+    "category": "angry"
+  },
+  {
+    "content": "深呼吸，這只是糟糕的一天，不是糟糕的一生。",
+    "category": "angry"
+  },
+  {
+    "content": "愛是恆久忍耐，又有恩慈。",
+    "category": "love"
+  },
+  {
+    "content": "平平淡淡才是真。",
+    "category": "neutral"
+  }
+]

@@ -10,6 +10,8 @@ import '../../data/services/local_db_service.dart';
 import '../../data/services/backup_service.dart';
 import '../../data/models/quote.dart';
 import 'quote_management_screen.dart'; // 引入新頁面
+import '../../providers/ai_provider.dart'; // 引入 AI Provider
+import '../../data/services/ai_service.dart'; // 引入 AI Service Enum
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -20,18 +22,24 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _urlController;
+  late TextEditingController _openAiKeyController;
+  late TextEditingController _geminiKeyController;
 
   @override
   void initState() {
     super.initState();
     // 初始化控制器，只在頁面建立時讀取一次 Provider 的值
-    final settings = ref.read(settingsProvider);
-    _urlController = TextEditingController(text: settings.serverUrl);
+    final aiState = ref.read(aiProvider);
+    _urlController = TextEditingController(text: aiState.localUrl);
+    _openAiKeyController = TextEditingController(text: aiState.openAiKey);
+    _geminiKeyController = TextEditingController(text: aiState.geminiKey);
   }
 
   @override
   void dispose() {
     _urlController.dispose();
+    _openAiKeyController.dispose();
+    _geminiKeyController.dispose();
     super.dispose();
   }
 
@@ -40,6 +48,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final themeMode = ref.watch(themeModeProvider);
+    
+    final aiState = ref.watch(aiProvider);
+    final aiNotifier = ref.read(aiProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text("設定")),
@@ -99,31 +110,74 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("伺服器連線設定", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text("AI 供應商設定", style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: _urlController,
+                    
+                    // 1. 選擇供應商
+                    DropdownButtonFormField<AiProviderType>(
+                      value: aiState.provider,
                       decoration: const InputDecoration(
-                        labelText: "伺服器位址 (Server URL)",
-                        hintText: "http://192.168.1.100:8000",
+                        labelText: '選擇 AI 模型來源',
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.link),
                         isDense: true,
                       ),
-                      keyboardType: TextInputType.url,
-                      onSubmitted: (value) {
-                        notifier.setServerUrl(value); // 按 Enter 儲存
-                      },
-                      onEditingComplete: () {
-                        notifier.setServerUrl(_urlController.text); // 離開焦點儲存
-                        FocusScope.of(context).unfocus();
+                      items: const [
+                        DropdownMenuItem(value: AiProviderType.local, child: Text('Local (LM Studio)')),
+                        DropdownMenuItem(value: AiProviderType.openai, child: Text('OpenAI (GPT)')),
+                        DropdownMenuItem(value: AiProviderType.gemini, child: Text('Google Gemini')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) aiNotifier.setProvider(value);
                       },
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "請輸入完整網址，包含 http:// 與埠號。\n例如: http://10.0.2.2:1234 (模擬器用)",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
+                    const SizedBox(height: 16),
+
+                    // 2. 根據選擇顯示對應輸入框
+                    if (aiState.provider == AiProviderType.local) ...[
+                      TextField(
+                        controller: _urlController,
+                        decoration: const InputDecoration(
+                          labelText: "伺服器位址 (Server URL)",
+                          hintText: "http://192.168.1.100:8000",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.link),
+                          isDense: true,
+                        ),
+                        keyboardType: TextInputType.url,
+                        onChanged: (val) => aiNotifier.setLocalUrl(val),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "模擬器請用 http://10.0.2.2:1234",
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ] else if (aiState.provider == AiProviderType.openai) ...[
+                      TextField(
+                        controller: _openAiKeyController,
+                        decoration: const InputDecoration(
+                          labelText: "OpenAI API Key",
+                          hintText: "sk-...",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.vpn_key),
+                          isDense: true,
+                        ),
+                        obscureText: true,
+                        onChanged: (val) => aiNotifier.setOpenAiKey(val),
+                      ),
+                    ] else if (aiState.provider == AiProviderType.gemini) ...[
+                      TextField(
+                        controller: _geminiKeyController,
+                        decoration: const InputDecoration(
+                          labelText: "Gemini API Key",
+                          hintText: "AIza...",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.vpn_key),
+                          isDense: true,
+                        ),
+                        obscureText: true,
+                        onChanged: (val) => aiNotifier.setGeminiKey(val),
+                      ),
+                    ],
                   ],
                 ),
               ),
