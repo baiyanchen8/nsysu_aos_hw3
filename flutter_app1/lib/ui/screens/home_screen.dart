@@ -83,19 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           );
         },
       ),
-
-      // 懸浮按鈕：快速新增今日日記
-      // 在 HomeScreen 的 build 方法裡
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // 跳轉到編輯頁，並帶入目前選中的日期
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => EditorScreen(date: selectedDay)),
-          );
-        },
-        child: const Icon(Icons.edit),
-      ),
+    
     );
   }
 

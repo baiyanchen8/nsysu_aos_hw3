@@ -29,7 +29,8 @@ class DiaryEntry {
     this.updatedAt = DateTime.now();
   }
 
-  @Index()
+  // 加上 @Unique()，確保 date 在資料庫中是唯一的
+  @Unique()
   late DateTime date;
 
   late DateTime createdAt;

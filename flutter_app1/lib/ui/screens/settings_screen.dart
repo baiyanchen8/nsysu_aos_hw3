@@ -10,6 +10,7 @@ import '../../data/services/local_db_service.dart';
 import '../../data/services/backup_service.dart';
 import '../../data/models/quote.dart';
 import 'quote_management_screen.dart'; // 引入新頁面
+import 'diary_management_screen.dart'; // 引入日記管理頁面
 import '../../providers/ai_provider.dart'; // 引入 AI Provider
 import '../../data/services/ai_service.dart'; // 引入 AI Service Enum
 
@@ -236,6 +237,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   );
                 }
               }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit_calendar),
+            title: const Text('批量管理日記'),
+            subtitle: const Text('刪除多筆日記'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const DiaryManagementScreen()));
             },
           ),
           const Divider(),

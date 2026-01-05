@@ -31,10 +31,19 @@ class LocalDbService {
 
   // --- CRUD ---
 
-  Future<void> saveEntry(DiaryEntry entry) async {
-    entry.date = cleanDate(entry.date);
-    // put: id 為 0 時新增，非 0 時更新
-    box.put(entry);
+  Future<void> saveEntry(DiaryEntry newEntry) async {
+    newEntry.date = cleanDate(newEntry.date);
+
+    // 為了確保一天只有一篇，儲存前先檢查該日期是否已有日記
+    final existingEntry = getEntryByDate(newEntry.date);
+
+    if (existingEntry != null) {
+      // 如果有，則使用舊日記的 ID 來執行「更新」，而不是新增
+      newEntry.id = existingEntry.id;
+      // 並且保留原始的創建時間，只更新 `updatedAt`
+      newEntry.createdAt = existingEntry.createdAt;
+    }
+    box.put(newEntry);
   }
 
   DiaryEntry? getEntryByDate(DateTime date) {
@@ -106,6 +115,11 @@ class LocalDbService {
     box.remove(id);
   }
 
+  // 批量刪除日記
+  void deleteEntries(List<int> ids) {
+    box.removeMany(ids);
+  }
+
   DateTime cleanDate(DateTime dt) {
     return DateTime(dt.year, dt.month, dt.day);
   }
@@ -116,7 +130,17 @@ class LocalDbService {
   }
 
   void restoreEntries(List<DiaryEntry> entries) {
-    box.putMany(entries);
+    // 使用 transaction 確保操作原子性與效能
+    store.runInTransaction(TxMode.write, () {
+      for (final entry in entries) {
+        // 確保日期正規化
+        entry.date = cleanDate(entry.date);
+        // 檢查該日期是否已存在日記 (以現有日記為主，若重複則跳過)
+        if (getEntryByDate(entry.date) == null) {
+          box.put(entry);
+        }
+      }
+    });
   }
 
   // --- Quotes ---
