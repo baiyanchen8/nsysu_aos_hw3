@@ -32,6 +32,10 @@
     *   包含多種分類的語錄 (如 `quotes.json`)，可透過 App 設定頁面匯入。
     *   未來將持續更新更多語錄集。
 
+*   **`release/`**: 存放 android 的 apk files。
+    *   android : apks
+    *   ios : 只有 `Readme` 介紹如何安裝。 
+    
 ## 🤖 如何設定 AI 雞湯功能 (AI Configuration)
 
 本應用程式支援多種 AI 模型來源，請依照以下步驟設定：
